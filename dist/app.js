@@ -64,16 +64,6 @@ function homePage() {
     <section class="section daily" aria-labelledby="daily-title"><div><h2 id="daily-title">Daily question</h2><p>One question to keep your preparation moving.</p></div><a class="button" href="#daily">${dailyDone ? 'Revisit today’s question' : 'Try today’s question'}</a></section>`;
 }
 
-function studyPage() {
-  return `<header class="page-heading"><h1>Study</h1><p>Review key points by subject, then test what you remember.</p></header>
-    <div class="grid study-grid">${topics.map(topic => `
-      <details class="surface study-topic">
-        <summary>${topic.name}</summary>
-        <ul>${topic.questions.map(([, , , explanation]) => `<li>${explanation}</li>`).join('')}</ul>
-        <a class="text-link" href="#topic/${topic.id}">Practice ${topic.name}</a>
-      </details>`).join('')}</div>`;
-}
-
 function practicePage() {
   return `<header class="page-heading"><h1>Topic-wise practice</h1><p>Choose a topic and get an explanation after each answer.</p></header>
     <input class="search" id="topic-search" type="search" placeholder="Search topics" aria-label="Search topics" autocomplete="off">
@@ -236,6 +226,7 @@ function render() {
     return;
   }
   main.innerHTML = route === 'result' && result ? resultPage() : pages[activePage]();
+  if (activePage === 'study') initializeStudy();
   if (activePage === 'practice') filterTopics();
   if (route) main.focus({ preventScroll: true });
 }
