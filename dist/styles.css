@@ -694,6 +694,33 @@ progress {
   color: var(--muted);
 }
 
+.study-grid {
+  align-items: start;
+}
+
+.study-topic {
+  padding: 16px 18px;
+}
+
+.study-topic summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.study-topic summary:focus-visible {
+  outline: 3px solid #43805a;
+  outline-offset: 4px;
+}
+
+.study-topic ul {
+  padding-inline-start: 20px;
+  color: var(--muted);
+}
+
+.study-topic li + li {
+  margin-top: 8px;
+}
+
 .history {
   padding: 0;
   list-style: none;
@@ -750,10 +777,11 @@ progress {
     width: 100%;
     justify-content: space-between;
     gap: 2px;
+    flex-wrap: wrap;
   }
   nav a {
     font-size: .875rem;
-    padding: 7px 8px;
+    padding: 7px 4px;
   }
   .top-action {
     min-height: 38px;
