@@ -303,6 +303,22 @@
 
 .study-task-list li {
   border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 8px;
+}
+
+.study-task-reading {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  margin-inline-end: 4px;
+  color: var(--green);
+  font-size: .875rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .study-task {
@@ -381,36 +397,40 @@
   font-size: .9375rem;
 }
 
-.study-syllabus-topic {
-  border-top: 1px solid var(--line);
-}
-
-.study-syllabus-topic summary {
+.study-topic-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   min-height: 44px;
-  padding: 10px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-weight: 700;
   line-height: 1.4;
 }
 
-.study-syllabus-topic ul {
-  margin: 0 0 14px;
-  padding-inline-start: 22px;
-  color: var(--muted);
+.study-topic-link:is(:hover, :focus-visible) {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.study-syllabus-topic li + li {
-  margin-top: 5px;
+.study-topic-action {
+  flex-shrink: 0;
+  color: var(--green);
+  font-size: .875rem;
 }
 
-:is(.study-day, .study-source, .study-syllabus-topic, .study-plan-warning) summary {
+:is(.study-day, .study-source, .study-plan-warning) summary {
   cursor: pointer;
   font-weight: 700;
 }
 
-:is(.study-day, .study-source, .study-syllabus-topic, .study-plan-warning) summary::marker {
+:is(.study-day, .study-source, .study-plan-warning) summary::marker {
   color: var(--green);
 }
 
-:is(.study-day, .study-source, .study-syllabus-topic, .study-plan-warning) summary:hover {
+:is(.study-day, .study-source, .study-plan-warning) summary:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -432,8 +452,130 @@
   background: #eef3e9;
 }
 
+.study-reader-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0 0 12px;
+}
+
+.study-reader-heading {
+  padding: clamp(22px, 5vw, 40px);
+  border-radius: 18px;
+  background: radial-gradient(ellipse at top right, #315e42, transparent 58%), var(--deep);
+  color: var(--paper);
+}
+
+.study-reader-heading .eyebrow {
+  color: var(--lime);
+}
+
+.study-reader-heading h1 {
+  max-width: 25ch;
+  margin-top: 8px;
+  font-size: clamp(1.95rem, 5.2vw, 3.5rem);
+  overflow-wrap: anywhere;
+}
+
+.study-reader-paper {
+  margin-top: 9px;
+  color: #e6efe3;
+}
+
+.study-reader-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(230px, 1fr);
+  align-items: start;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.study-lesson {
+  padding: clamp(20px, 4vw, 38px);
+}
+
+.study-lesson h2 {
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+}
+
+.study-lesson p {
+  max-width: 70ch;
+  margin-top: 10px;
+  font-size: 1.045rem;
+  line-height: 1.72;
+}
+
+.study-lesson-section + .study-lesson-section {
+  margin-top: 25px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.study-reader-sidebar {
+  display: grid;
+  gap: 12px;
+}
+
+.study-reader-card {
+  padding: 18px 20px;
+}
+
+.study-reader-card h2 {
+  font-size: 1.2rem;
+}
+
+.study-reader-card ul {
+  margin: 9px 0 0;
+  padding-inline-start: 18px;
+  color: var(--muted);
+}
+
+.study-reader-card li + li {
+  margin-top: 8px;
+}
+
+.study-reader-card .study-reading-list {
+  padding: 0;
+  list-style: none;
+}
+
+.study-reading-list li + li {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.study-reading-list .text-link {
+  white-space: normal;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.study-reading-list p {
+  margin-top: 4px;
+  font-size: .9rem;
+}
+
+.study-reader-pagination {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.study-reader-adjacent {
+  display: grid;
+  gap: 3px;
+  padding: 12px 15px;
+}
+
+.study-reader-adjacent:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 800px) {
-  .study-workspace {
+  .study-workspace,
+  .study-reader-layout {
     grid-template-columns: 1fr;
   }
 }
@@ -451,6 +593,23 @@
 @media (max-width: 420px) {
   .study-fields {
     grid-template-columns: 1fr;
+  }
+
+  .study-task-list li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .study-task-reading {
+    justify-self: start;
+    margin-inline-start: 25px;
+  }
+
+  .study-reader-pagination {
+    grid-template-columns: 1fr;
+  }
+
+  .study-reader-pagination > div:empty {
+    display: none;
   }
 
   .study-plan-summary {

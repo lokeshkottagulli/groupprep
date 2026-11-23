@@ -42,7 +42,7 @@ function studyPage() {
     </section>
     <section class="section study-syllabus" aria-labelledby="study-syllabus-heading">
       <div class="section-heading">
-        <div><h2 id="study-syllabus-heading" tabindex="-1">Topic-wise syllabus</h2><p>Expand a topic to see what it covers.</p></div>
+        <div><h2 id="study-syllabus-heading" tabindex="-1">Topic-wise syllabus</h2><p>Select a topic to open its lesson and textbook links.</p></div>
         <button type="button" class="button secondary" data-study-scroll="study-settings-heading">Change group or stage</button>
       </div>
       <div id="study-syllabus-content"></div>
@@ -58,7 +58,7 @@ function studyPage() {
     </details>`;
 }
 
-function initializeStudy() {
+function initializeStudy(returnFrom) {
   const form = document.querySelector('#study-form');
   const schedule = document.querySelector('#study-schedule');
   const syllabus = document.querySelector('#study-syllabus-content');
@@ -175,8 +175,14 @@ function initializeStudy() {
   [controls.startDate.value, controls.endDate.value] = dates;
   controls.minutesPerDay.value = minutes;
   form.querySelectorAll('[name="weekday"]').forEach(input => { input.checked = weekdays.includes(Number(input.value)); });
-  syllabus.innerHTML = studySyllabus(group(), stagePapers());
   applySettings(!saved);
+  if (returnFrom && (group().id !== returnFrom.group.id || !stagePapers().includes(returnFrom.paper))) {
+    controls.groupId.value = returnFrom.group.id;
+    updateStages(returnFrom.paper.stage);
+    updatePapers();
+    message.textContent = 'Generate the plan to use these syllabus settings for your schedule.';
+  }
+  syllabus.innerHTML = studySyllabus(group(), stagePapers());
 
   form.addEventListener('change', event => {
     if (event.target === controls.groupId) updateStages();
@@ -215,6 +221,7 @@ function initializeStudy() {
   document.querySelectorAll('[data-study-scroll]').forEach(button => button.addEventListener('click', () => {
     document.getElementById(button.dataset.studyScroll).focus();
   }));
+  return returnFrom ? document.getElementById(`syllabus-${returnFrom.topic.id}`) : null;
 }
 
 function studyStat(value, label) {
@@ -228,7 +235,7 @@ function dailyStudyCard(day, today, done, open) {
     <ul class="study-task-list">${day.tasks.map(task => `<li><label class="study-task">
       <input type="checkbox" data-study-task value="${studyText(task.id)}" ${done.has(task.id) ? 'checked' : ''}>
       <span><strong>${task.kind === 'review' ? 'Review' : 'Study'} ${studyText(task.name)}</strong><small>${studyText(task.paperName)} · ${studyDuration(task.minutes)}</small></span>
-    </label></li>`).join('')}</ul>
+    </label><a class="study-task-reading" href="${studyTopicHref(task.topicId)}" aria-label="Read topic: ${studyText(task.name)}">Read topic</a></li>`).join('')}</ul>
   </details>`;
 }
 
@@ -248,7 +255,7 @@ function studySyllabus(group, papers) {
     ${group.notice ? `<p class="study-note">${studyText(group.notice)}</p>` : ''}
     <div class="study-papers">${papers.map(paper => `<article class="surface study-paper">
       <header><h3>${studyText(paper.name)}</h3><p class="study-note">${studyText(paper.stage)}${paper.optional ? ' · Optional' : ''} · ${paper.topics.length} ${paper.topics.length === 1 ? 'topic' : 'topics'}${paper.sourcePages ? ` · PDF ${String(paper.sourcePages).includes('–') ? 'pages' : 'p.'} ${studyText(paper.sourcePages)}` : ''}</p></header>
-      ${paper.topics.map(topic => `<details class="study-syllabus-topic"><summary>${studyText(topic.name)}</summary><ul>${topic.subtopics.map(subtopic => `<li>${studyText(subtopic)}</li>`).join('')}</ul></details>`).join('')}
+      ${paper.topics.map(topic => `<a class="study-syllabus-topic study-topic-link" href="${studyTopicHref(topic.id)}" id="syllabus-${topic.id}"><span>${studyText(topic.name)}</span><span class="study-topic-action" aria-hidden="true">Read topic</span></a>`).join('')}
     </article>`).join('')}</div>
     ${studySource(group)}`;
 }

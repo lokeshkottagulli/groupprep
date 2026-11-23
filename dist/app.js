@@ -6,6 +6,7 @@ let attempt = null;
 let result = null;
 let timer = null;
 let activePage = '';
+let openStudyTopic = null;
 let studyHistory = readHistory();
 
 function readHistory() {
@@ -214,7 +215,10 @@ function render() {
   const topic = topics.find(item => route === `topic/${item.id}`);
   const quizKind = topic?.id ?? (['mock', 'daily'].includes(route) ? route : null);
   const pages = { home: homePage, study: studyPage, practice: practicePage, mocks: mockPage, progress: progressPage };
-  activePage = topic ? 'practice' : route === 'mock' ? 'mocks' : Object.hasOwn(pages, route) ? route : 'home';
+  const previousStudyTopic = openStudyTopic;
+  const readerRoute = route.startsWith('study/topic/');
+  openStudyTopic = readerRoute ? studyTopicIndex.get(route.slice('study/topic/'.length)) ?? null : null;
+  activePage = readerRoute ? 'study' : topic ? 'practice' : route === 'mock' ? 'mocks' : Object.hasOwn(pages, route) ? route : 'home';
   if (route === 'result' && result) activePage = 'progress';
   navLinks.forEach(link => {
     if (link.dataset.page === activePage) link.setAttribute('aria-current', 'page');
@@ -225,10 +229,16 @@ function render() {
     startAttempt(quizKind, topic);
     return;
   }
+  if (readerRoute) {
+    main.innerHTML = openStudyTopic ? studyReaderPage(openStudyTopic) : studyTopicMissing();
+    main.querySelector('h1').focus({ preventScroll: true });
+    return;
+  }
   main.innerHTML = route === 'result' && result ? resultPage() : pages[activePage]();
-  if (activePage === 'study') initializeStudy();
+  const restoredTopic = activePage === 'study' ? initializeStudy(previousStudyTopic) : null;
   if (activePage === 'practice') filterTopics();
-  if (route) main.focus({ preventScroll: true });
+  if (restoredTopic) restoredTopic.focus();
+  else if (route) main.focus({ preventScroll: true });
 }
 
 document.querySelector('.skip').addEventListener('click', event => {
