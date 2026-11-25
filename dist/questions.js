@@ -1,4 +1,4 @@
-const topics = [
+const coreTopics = [
   {
     id: 'polity', name: 'Indian Polity', icon: '§', tone: 'green',
     description: 'Constitution, rights and institutions',

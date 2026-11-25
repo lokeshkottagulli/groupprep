@@ -1,6 +1,11 @@
 const main = document.querySelector('main');
 const navLinks = [...document.querySelectorAll('[data-page]')];
-const questionBank = topics.flatMap(topic => topic.questions);
+const practiceSections = [
+  { id: 'general-studies', title: 'General studies and aptitude', topics: [...coreTopics, ...generalStudiesTopics] },
+  { id: 'exam-skills', title: 'Exam-specific practice', topics: examSkillsTopics }
+];
+const topics = practiceSections.flatMap(section => section.topics);
+const dailyQuestions = coreTopics.flatMap(topic => topic.questions);
 const storageKey = 'groupprep-history-v1';
 let attempt = null;
 let result = null;
@@ -44,9 +49,22 @@ function topicCards(items) {
     </a>`).join('');
 }
 
+function practiceTopicSections(query = '') {
+  const sections = practiceSections.map(({ id, title, topics: items }) => {
+    const matches = items.filter(topic => `${topic.name} ${topic.description}`.toLowerCase().includes(query));
+    if (!matches.length) return '';
+    return `<section aria-labelledby="practice-${id}">
+      <h2 id="practice-${id}">${title}</h2>
+      <div class="grid">${topicCards(matches)}</div>
+    </section>`;
+  }).join('');
+  return sections || '<p class="empty" role="status">No matching topics.</p>';
+}
+
 function homePage() {
   const { answered, accuracy } = stats();
   const dailyDone = studyHistory.some(entry => entry.kind === 'daily' && entry.day === dateKey());
+  const questionCount = topics.reduce((count, topic) => count + topic.questions.length, 0);
   return `
     <section class="hero" aria-labelledby="home-title">
       <div>
@@ -57,10 +75,10 @@ function homePage() {
       </div>
       <div class="hero-art" aria-hidden="true"><div class="orbit"></div><span class="spark one">✦</span><span class="spark two">✦</span><span class="spark three">✧</span><div class="art-sheet"><i></i><i></i><i></i><i></i></div><div class="art-book">Study<br>notes</div></div>
     </section>
-    ${statStrip([['▤', questionBank.length, 'Practice questions'], ['✓', answered, 'Questions answered'], ['◎', accuracy, 'Your accuracy']])}
+    ${statStrip([['▤', questionCount, 'Practice questions'], ['✓', answered, 'Questions answered'], ['◎', accuracy, 'Your accuracy']])}
     <section class="section" aria-labelledby="topics-title">
       <div class="section-heading"><div><h2 id="topics-title">Practice by topic</h2><p>Pick a subject to start a short practice set.</p></div><a class="text-link" href="#practice">All topics</a></div>
-      <div class="grid">${topicCards(topics)}</div>
+      <div class="grid">${topicCards(coreTopics)}</div>
     </section>
     <section class="section daily" aria-labelledby="daily-title"><div><h2 id="daily-title">Daily question</h2><p>One question to keep your preparation moving.</p></div><a class="button" href="#daily">${dailyDone ? 'Revisit today’s question' : 'Try today’s question'}</a></section>`;
 }
@@ -68,7 +86,7 @@ function homePage() {
 function practicePage() {
   return `<header class="page-heading"><h1>Topic-wise practice</h1><p>Choose a topic and get an explanation after each answer.</p></header>
     <input class="search" id="topic-search" type="search" placeholder="Search topics" aria-label="Search topics" autocomplete="off">
-    <div class="grid" id="topic-list">${topicCards(topics)}</div>`;
+    <div class="practice-topics" id="topic-list">${practiceTopicSections()}</div>`;
 }
 
 function filterTopics() {
@@ -76,14 +94,13 @@ function filterTopics() {
   const list = document.querySelector('#topic-list');
   search.addEventListener('input', () => {
     const query = search.value.trim().toLowerCase();
-    const items = topics.filter(topic => `${topic.name} ${topic.description}`.toLowerCase().includes(query));
-    list.innerHTML = items.length ? topicCards(items) : '<p class="empty" role="status">No matching topics.</p>';
+    list.innerHTML = practiceTopicSections(query);
   });
 }
 
 function mockPage() {
   return `<header class="page-heading"><h1>Mock tests</h1><p>Practice answering questions under a time limit.</p></header>
-    <section class="surface"><h2>Mixed mini mock</h2><p>12 questions across all six subjects. You have 10 minutes. Skip questions if you need to and review every answer at the end.</p><div class="button-row"><a class="button" href="#mock">Start timed test</a></div></section>`;
+    <section class="surface"><h2>Mixed mini mock</h2><p>12 questions across the six core subjects. You have 10 minutes. Skip questions if you need to and review every answer at the end.</p><div class="button-row"><a class="button" href="#mock">Start timed test</a></div></section>`;
 }
 
 function progressPage() {
@@ -113,10 +130,10 @@ function startAttempt(kind, topic) {
   let questions;
   const day = dateKey();
   if (kind === 'mock') {
-    questions = shuffle(topics.flatMap(item => shuffle(item.questions).slice(0, 2)));
+    questions = shuffle(coreTopics.flatMap(item => shuffle(item.questions).slice(0, 2)));
   } else if (kind === 'daily') {
     const dayNumber = Date.parse(day) / 86400000;
-    questions = [questionBank[dayNumber % questionBank.length]];
+    questions = [dailyQuestions[dayNumber % dailyQuestions.length]];
   } else {
     questions = topic.questions;
   }
@@ -125,9 +142,13 @@ function startAttempt(kind, topic) {
   if (kind === 'mock' && attempt) timer = setInterval(updateTimer, 250);
 }
 
+function answerExplanation(explanation, source) {
+  return `${explanation}${source ? ` <a class="question-source" href="${source}" target="_blank" rel="noopener">Source</a>` : ''}`;
+}
+
 function renderQuiz(focus = true) {
   const { kind, questions, index, answers } = attempt;
-  const [prompt, options, correct, explanation] = questions[index];
+  const [prompt, options, correct, explanation, source] = questions[index];
   const chosen = answers[index];
   const timed = kind === 'mock';
   const revealed = !timed && chosen !== null;
@@ -139,7 +160,7 @@ function renderQuiz(focus = true) {
       const grading = revealed && position === correct ? ' correct' : revealed && position === chosen ? ' incorrect' : '';
       return `<button class="option${grading}" type="button" data-answer="${position}" aria-pressed="${chosen === position}" ${revealed ? 'disabled' : ''}><span class="letter" aria-hidden="true">${'ABCD'[position]}</span>${option}${revealed && position === correct ? ' <span aria-label="Correct answer">✓</span>' : ''}</button>`;
     }).join('')}</div>
-    ${revealed ? `<div class="feedback" id="feedback" tabindex="-1"><strong>${chosen === correct ? 'Correct' : 'Incorrect'}</strong><p>${explanation}</p></div>` : ''}
+    ${revealed ? `<div class="feedback" id="feedback" tabindex="-1"><strong>${chosen === correct ? 'Correct' : 'Incorrect'}</strong><p>${answerExplanation(explanation, source)}</p></div>` : ''}
     <div class="quiz-actions"><a class="text-link" href="#${timed ? 'mocks' : kind === 'daily' ? 'home' : 'practice'}">Exit ${timed ? 'test' : 'practice'}</a><div class="quiz-buttons">
       ${timed && index > 0 ? '<button class="button secondary" type="button" id="previous">Previous</button>' : ''}
       <button class="button" type="button" id="next" ${!timed && !revealed ? 'disabled' : ''}>${index + 1 === questions.length ? (timed ? 'Finish test' : 'See results') : timed && chosen === null ? 'Skip question' : 'Next question'}</button>
@@ -202,8 +223,8 @@ function resultPage() {
   return `<section class="quiz surface">
     <header class="page-heading"><div class="eyebrow">${titleFor(kind)}</div><h1>${expired ? 'Time is up' : 'Your results'}</h1><p>${correct} of ${total} correct${answered < total ? ` · ${total - answered} skipped` : ''}</p></header>
     <div class="button-row"><a class="button" href="#${retry}">Try again</a><a class="button secondary" href="#progress">View progress</a></div>
-    <div class="review"><h2>Review answers</h2>${questions.map(([prompt, options, answer, explanation], index) => `
-      <details><summary>${index + 1}. ${prompt}</summary><p>Your answer — ${options[answers[index]] ?? 'Skipped'}</p><p>Correct answer — ${options[answer]}</p><p>${explanation}</p></details>`).join('')}</div>
+    <div class="review"><h2>Review answers</h2>${questions.map(([prompt, options, answer, explanation, source], index) => `
+      <details><summary>${index + 1}. ${prompt}</summary><p>Your answer — ${options[answers[index]] ?? 'Skipped'}</p><p>Correct answer — ${options[answer]}</p><p>${answerExplanation(explanation, source)}</p></details>`).join('')}</div>
   </section>`;
 }
 
@@ -214,7 +235,7 @@ function render() {
   attempt = null;
   const topic = topics.find(item => route === `topic/${item.id}`);
   const quizKind = topic?.id ?? (['mock', 'daily'].includes(route) ? route : null);
-  const pages = { home: homePage, study: studyPage, practice: practicePage, mocks: mockPage, progress: progressPage };
+  const pages = { home: homePage, study: studyPage, books: booksPage, practice: practicePage, mocks: mockPage, progress: progressPage };
   const previousStudyTopic = openStudyTopic;
   const readerRoute = route.startsWith('study/topic/');
   openStudyTopic = readerRoute ? studyTopicIndex.get(route.slice('study/topic/'.length)) ?? null : null;
@@ -236,6 +257,7 @@ function render() {
   }
   main.innerHTML = route === 'result' && result ? resultPage() : pages[activePage]();
   const restoredTopic = activePage === 'study' ? initializeStudy(previousStudyTopic) : null;
+  if (activePage === 'books') initializeBooks();
   if (activePage === 'practice') filterTopics();
   if (restoredTopic) restoredTopic.focus();
   else if (route) main.focus({ preventScroll: true });
