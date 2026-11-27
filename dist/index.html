@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="study.css">
   <link rel="stylesheet" href="books.css">
+  <link rel="stylesheet" href="auth.css">
   <script defer src="questions.js"></script>
   <script defer src="questions-general-studies.js"></script>
   <script defer src="questions-exam-skills.js"></script>
@@ -25,6 +26,7 @@
   <script defer src="study.js"></script>
   <script defer src="textbook-pdfs.js"></script>
   <script defer src="books.js"></script>
+  <script defer src="auth.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -40,8 +42,18 @@
         <a href="#mocks" data-page="mocks">Mock tests</a>
         <a href="#progress" data-page="progress">Progress</a>
       </nav>
-      <a class="top-action" href="#practice">Start practice</a>
+      <div class="account-actions" role="group" aria-label="Account">
+        <div id="account-guest" class="account-links">
+          <a class="button secondary account-signin" href="#signin" data-page="signin">Sign in</a>
+          <a class="top-action" href="#signup" data-page="signup">Sign up</a>
+        </div>
+        <div id="account-member" class="account-links" hidden>
+          <span id="account-name" class="account-name"></span>
+          <button id="account-logout" class="top-action" type="button">Sign out</button>
+        </div>
+      </div>
     </div>
+    <p id="account-header-error" class="shell account-error" role="alert"></p>
   </header>
   <main id="main" class="shell" tabindex="-1"></main>
   <footer class="shell footer"><a class="brand footer-brand" href="#home">Group<span>Prep</span></a><p>Independent practice for Group exam aspirants.</p></footer>

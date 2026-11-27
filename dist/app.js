@@ -157,9 +157,9 @@ function renderQuiz(focus = true) {
     <progress value="${index + 1}" max="${questions.length}" aria-label="Question position"></progress>
     <h1 id="question-title" tabindex="-1">${prompt}</h1>
     <div class="options" role="group" aria-label="Answer options">${options.map((option, position) => {
-      const grading = revealed && position === correct ? ' correct' : revealed && position === chosen ? ' incorrect' : '';
-      return `<button class="option${grading}" type="button" data-answer="${position}" aria-pressed="${chosen === position}" ${revealed ? 'disabled' : ''}><span class="letter" aria-hidden="true">${'ABCD'[position]}</span>${option}${revealed && position === correct ? ' <span aria-label="Correct answer">✓</span>' : ''}</button>`;
-    }).join('')}</div>
+    const grading = revealed && position === correct ? ' correct' : revealed && position === chosen ? ' incorrect' : '';
+    return `<button class="option${grading}" type="button" data-answer="${position}" aria-pressed="${chosen === position}" ${revealed ? 'disabled' : ''}><span class="letter" aria-hidden="true">${'ABCD'[position]}</span>${option}${revealed && position === correct ? ' <span aria-label="Correct answer">✓</span>' : ''}</button>`;
+  }).join('')}</div>
     ${revealed ? `<div class="feedback" id="feedback" tabindex="-1"><strong>${chosen === correct ? 'Correct' : 'Incorrect'}</strong><p>${answerExplanation(explanation, source)}</p></div>` : ''}
     <div class="quiz-actions"><a class="text-link" href="#${timed ? 'mocks' : kind === 'daily' ? 'home' : 'practice'}">Exit ${timed ? 'test' : 'practice'}</a><div class="quiz-buttons">
       ${timed && index > 0 ? '<button class="button secondary" type="button" id="previous">Previous</button>' : ''}
@@ -229,13 +229,17 @@ function resultPage() {
 }
 
 function render() {
-  const route = location.hash.slice(1);
+  const hash = location.hash.slice(1);
+  const route = hash === 'login' ? 'signin' : hash;
   if (route === 'main') return;
   clearInterval(timer);
   attempt = null;
   const topic = topics.find(item => route === `topic/${item.id}`);
   const quizKind = topic?.id ?? (['mock', 'daily'].includes(route) ? route : null);
-  const pages = { home: homePage, study: studyPage, books: booksPage, practice: practicePage, mocks: mockPage, progress: progressPage };
+  const pages = {
+    home: homePage, study: studyPage, books: booksPage, practice: practicePage, mocks: mockPage,
+    progress: progressPage, signin: () => accountPage('login'), signup: () => accountPage('signup')
+  };
   const previousStudyTopic = openStudyTopic;
   const readerRoute = route.startsWith('study/topic/');
   openStudyTopic = readerRoute ? studyTopicIndex.get(route.slice('study/topic/'.length)) ?? null : null;
@@ -259,6 +263,7 @@ function render() {
   const restoredTopic = activePage === 'study' ? initializeStudy(previousStudyTopic) : null;
   if (activePage === 'books') initializeBooks();
   if (activePage === 'practice') filterTopics();
+  if (activePage === 'signin' || activePage === 'signup') bindAccountPage(main);
   if (restoredTopic) restoredTopic.focus();
   else if (route) main.focus({ preventScroll: true });
 }
@@ -269,3 +274,6 @@ document.querySelector('.skip').addEventListener('click', event => {
 });
 window.addEventListener('hashchange', render);
 render();
+initializeAccount(() => {
+  if (activePage === 'signin' || activePage === 'signup') render();
+});
